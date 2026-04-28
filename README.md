@@ -57,50 +57,51 @@ Socket programming finds applications in various domains, including web developm
 ```
 import socket
 import threading
-import time 
+import time
+
 def server():
-    s=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind(("127.0.0.1",5000))
-    s.listen(1)
-    print("server waiting")
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("0.0.0.0", 5000))  
+        s.listen()
+        print("[SYSTEM] Network monitor active...")
 
-    conn, addr=s.accept()
-    print("connected by :",addr)
-    data=conn.recv(1024)
-    print("client says: ",data.decode())
+        conn, addr = s.accept()
+        with conn:
+            ip, port = addr
 
-    conn.send("hello from server ".encode())
-    conn.close()
-    s.close()
+            print(f"[ALERT] Connection detected from IP: {ip} | PORT: {port}")
+
+            data = conn.recv(1024).decode()
+            print("[DATA RECEIVED]:", data)
+
+            response = f"""
+SECURITY LOG ENTRY
+-------------------
+IP ADDRESS : {ip}
+PORT       : {port}
+TIME       : {time.ctime()}
+STATUS     : CONNECTION LOGGED
+"""
+            conn.send(response.encode())
 
 def client():
-    time.sleep(1)  # wait for server to start
+    time.sleep(1)
 
-    c = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    c.connect(("127.0.0.1", 5000))
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as c:
+        c.connect(("127.0.0.1", 5000))
+        c.send("ping system node".encode())
 
-    c.send("Hello from client".encode())
+        print(c.recv(1024).decode())
 
-    response = c.recv(1024)
-    print("Server says:", response.decode())
-
-    c.close()
-
-server_thread = threading.Thread(target=server)
-client_thread = threading.Thread(target=client)
-
-server_thread.start()
-client_thread.start()
-
-server_thread.join()
-client_thread.join()
+threading.Thread(target=server).start()
+threading.Thread(target=client).start()
 ```
 
 ## Output:
 
-<img width="1920" height="1080" alt="Screenshot 2026-04-28 093132" src="https://github.com/user-attachments/assets/df4e630e-0ffb-466d-a873-df534d095159" />
+<img width="1920" height="1080" alt="Screenshot 2026-04-28 095338" src="https://github.com/user-attachments/assets/f4dae1cd-9ee4-4a0f-bb56-266f1c04e267" />
 
-<img width="1920" height="1080" alt="Screenshot 2026-04-28 093209" src="https://github.com/user-attachments/assets/75e4040c-774d-4560-98ac-687879caeb89" />
+<img width="1920" height="1080" alt="Screenshot 2026-04-28 095356" src="https://github.com/user-attachments/assets/9a50be51-43ce-4962-9d64-410b7d116d2a" />
 
 
 ## Result:
